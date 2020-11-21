@@ -197,7 +197,20 @@ class GoogleClient {
                             ] as JsonBatchCallback<Event>)
                 }
 
-        batch.execute()
+        executeWithExponentialBackoff(batch)
+    }
+
+    private static void executeWithExponentialBackoff(BatchRequest batch, Double delay = 1000.0f) {
+        try {
+            batch.execute()
+        } catch (Exception e) {
+            LOGGER.error(e.toString())
+
+            if(delay < 30000) {
+                Thread.sleep(delay.intValue())
+                executeWithExponentialBackoff(batch, 1.25 * delay)
+            }
+        }
     }
 
     private static String prettyPrintEvent(CalSyncEvent event) {
